@@ -17,7 +17,7 @@ unsigned long pullFromBuffer(unsigned char * buffer, int length, int startAddres
 	return byteSet;
 }
 
-wavFile * loadWav(char * filePath){
+struct wavFile * loadWav(char * filePath){
 	//open file and get size
 	FILE *fptr;
 	unsigned long fSize;
@@ -50,7 +50,7 @@ wavFile * loadWav(char * filePath){
 		return NULL;
 	}
 
-	wavFile *wf;
+	struct wavFile *wf;
 	//file info
 	wf->Channels = pullFromBuffer(buffer, 2, 22, LITTLE_ENDIAN_TAG);//2 bytes at 20
 	wf->SampleRate = pullFromBuffer(buffer, 2, 24, LITTLE_ENDIAN_TAG);//4 bytes at 24

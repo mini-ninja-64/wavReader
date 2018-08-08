@@ -1,10 +1,9 @@
 #ifndef WAVLOADER_H
 #define WAVLOADER_H
 
-#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string>
+#include <string.h>
 
 #define BIG_ENDIAN_TAG 0
 #define LITTLE_ENDIAN_TAG 1
@@ -49,17 +48,14 @@ each sample has (Block Align)Bytes, the left channel is the first half of the sa
 //struct sample??
 
 struct wavFile{
-    public:
-    	int Channels;
-        int SampleRate;
-        int BlockAlign;
-        int BitsPerSample;
-        unsigned char * AudioData;
-    private:
-        
+	int Channels;
+	int SampleRate;
+	int BlockAlign;
+	int BitsPerSample;
+	unsigned char * AudioData;      
 };
 
-wavFile * loadWav(char * filePath);
+struct wavFile * loadWav(char * filePath);
 
 unsigned long pullFromBuffer(unsigned char * buffer, int length, int startAddress, int dataType);
 
