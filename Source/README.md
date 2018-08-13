@@ -3,6 +3,7 @@
 * Wave file type (struct)
 * Opens waves and gets data like: num of channels, sample rate etc
 * Copies audio to char array
+* Calculate the amplitudes of samples
 * Calculate Track Length (Basic)
 
 <h1>WIP</h1>
