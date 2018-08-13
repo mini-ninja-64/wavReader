@@ -1,7 +1,7 @@
 #include "wavLoader.h"
 
-unsigned long pullFromBuffer(unsigned char * buffer, int length, int startAddress, int dataType){
-	unsigned long byteSet;
+long pullFromBuffer(unsigned char * buffer, int length, int startAddress, int dataType){
+	long byteSet;
 	if (dataType){ //little endian
 		byteSet = buffer[startAddress+(length-1)];
 		for (int i = length-2; i >= 0; i--){ // -2 offset as need -1 cos array start at 0 and -1 as we already done one above
@@ -15,6 +15,38 @@ unsigned long pullFromBuffer(unsigned char * buffer, int length, int startAddres
 		}
 	}
 	return byteSet;
+}
+
+sample * createSample(wavFile * wFile, int n){
+	//TODO: 2s complement, and 8 bits
+	sample *samp;
+	printf ("Channels: %d\n", wFile->Channels);
+	samp->Amplitude = (long*) malloc (sizeof(long)*wFile->Channels);//(long*) malloc (sizeof(long)*wFile->Channels);
+
+	if(wFile->BitsPerSample <= 8){
+		for (int c = 0; c < wFile->Channels; c++){
+			samp->Amplitude[c] = wFile->Samples[(n * wFile->Channels * wFile->BitsPerSample/8)+(wFile->BitsPerSample/8)-1];
+			for (int o = (wFile->BitsPerSample/8)-2; o >= 0 ; o--){
+				samp->Amplitude[c] = (samp->Amplitude[c] << 8) | (wFile->Samples[ (n * wFile->Channels * wFile->BitsPerSample/8)-o]); // little endian amplitude gotten from the audio buffer
+			}
+			samp->Amplitude[c] -= 1<<(wFile->BitsPerSample-1); //2^bps-1 = (2^bps)/2
+		}
+	}else{
+		/*  how to twos compliment lol
+			im not rusty pshhh
+			if the MSB is 1 then ya know this boy gon be negative
+			
+			conversion to signed:
+			invert with invert operator ~
+			then add 1
+			if MSB is 1 then u have a negative
+			else positive
+		*/
+	}
+		//samp->Amplitude[0] = -26214;
+	printf ("Amplitude: %ld\n", samp->Amplitude[0]);
+	std::cout << (signed)samp->Amplitude[0] << std::endl;
+	return samp;
 }
 
 wavFile * loadWav(char * filePath){
@@ -56,13 +88,16 @@ wavFile * loadWav(char * filePath){
 	wf->SampleRate = pullFromBuffer(buffer, 2, 24, LITTLE_ENDIAN_TAG);//4 bytes at 24
 	wf->BlockAlign = pullFromBuffer(buffer, 2, 32, LITTLE_ENDIAN_TAG);//2 bytes at 32
 	wf->BitsPerSample = pullFromBuffer(buffer, 2, 34, LITTLE_ENDIAN_TAG);//2 bytes at 34
-
-	//file data
 	unsigned long audioDataSize = pullFromBuffer(buffer, 4, 40, LITTLE_ENDIAN_TAG);
-	wf->AudioData = (unsigned char*) malloc (sizeof(char)*audioDataSize); //4 bytes at 40
+	wf->NumberOfSamples = (audioDataSize/wf->Channels) * (8/wf->BitsPerSample);//audio data size = channels * number of samples * bitsPerSample/8, number of samples = (audio data size * 8)/(channels*bitsper sample)
+
+	//create sample array
+	wf->Samples = (unsigned char*) malloc (sizeof(char)*audioDataSize); //4 bytes at 40
 
 	//move the data array
-	memmove(wf->AudioData, buffer+44, audioDataSize);
+	//right so currently mem moving to Audio data
+	//so to get audio sample at specific point, we do (n*channel*bitspersample/8)
+	memmove(wf->Samples, buffer+44, audioDataSize);
 	free(buffer);
 	
 	printf ("Channels: %d\n", wf->Channels);
@@ -71,8 +106,8 @@ wavFile * loadWav(char * filePath){
 	printf ("Bits Per Sample: %d\n", wf->BitsPerSample);
 	printf ("Audio Data Size: %lu\n\n", audioDataSize);
 
-	printf ("Audio Data: %x %x %x %x\n", wf->AudioData[0], wf->AudioData[1], wf->AudioData[2], wf->AudioData[3]);
+	printf ("Audio Data: %x %x %x %x\n", wf->Samples[0], wf->Samples[1], wf->Samples[2], wf->Samples[3]);
 
 
-	return NULL;
+	return wf;
 }
