@@ -12,6 +12,7 @@
 <h1>To Do</h1>
 
 * Stop presuming data will be where its supposed to be and use the chunk sizes incase files have stuff in them 
+* Stream from disk
 * Create Branches for stuff
 * Come up with a solution for playback
 * Generate spectogram
