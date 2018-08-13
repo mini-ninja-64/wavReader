@@ -77,5 +77,6 @@ wavFile * loadWav(char * filePath);
 sample * createSample(wavFile * wFile, int n);
 
 long pullFromBuffer(unsigned char * buffer, int length, int startAddress, int dataType);
+long pullLittleSigned(unsigned char * buffer, int length, int startAddress);
 
 #endif /* WAVLOADER_H */

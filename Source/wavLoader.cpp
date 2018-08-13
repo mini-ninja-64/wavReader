@@ -5,7 +5,7 @@ long pullFromBuffer(unsigned char * buffer, int length, int startAddress, int da
 	if (dataType){ //little endian
 		byteSet = buffer[startAddress+(length-1)];
 		for (int i = length-2; i >= 0; i--){ // -2 offset as need -1 cos array start at 0 and -1 as we already done one above
-			//std::cout << std::hex << byteSet << " " << buffer[startAddress+i] << std::endl;
+			//std::cout << std::hex << byteSet << " " << (int) buffer[startAddress+i] << std::endl;
 			byteSet = byteSet << 8 | buffer[startAddress+i];
 		}
 	}else{
@@ -17,35 +17,61 @@ long pullFromBuffer(unsigned char * buffer, int length, int startAddress, int da
 	return byteSet;
 }
 
+long pullLittleSigned(unsigned char * buffer, int length, int startAddress){
+		/*  how to twos compliment lol
+		im not rusty pshhh
+		if the MSB is 1 then ya know this boy gon be negative
+		
+		conversion to signed:
+		invert with invert operator ~
+		then add 1
+		if MSB is 1 then u have a negative
+		else positive
+	*/
+
+	//TODO: clean and optimise
+	long byteSet;
+	if ((buffer[startAddress+(length-1)]>>7) == 1){
+		byteSet = buffer[startAddress+(length-1)]^0xff;//invert but only want length of 1 byte so xor with 1 byte
+		for (int i = length-2; i >= 0; i--){ // -2 offset as need -1 cos array start at 0 and -1 as we already done one above
+			byteSet = byteSet << 8 | (buffer[startAddress+i]^0xff);
+		}
+		byteSet++;//inverted so now just+1
+		byteSet*=-1;
+	}else{
+		byteSet = pullFromBuffer(buffer,length,startAddress,LITTLE_ENDIAN_TAG);
+	}
+	return byteSet;
+}
+
 sample * createSample(wavFile * wFile, int n){
-	//TODO: 2s complement, and 8 bits
+	//TODO: optimise and neaten up this whole thing
 	sample *samp;
-	printf ("Channels: %d\n", wFile->Channels);
+	//printf ("Channels: %d\n", wFile->Channels);
 	samp->Amplitude = (long*) malloc (sizeof(long)*wFile->Channels);//(long*) malloc (sizeof(long)*wFile->Channels);
 
+	for (int c = 0; c < wFile->Channels; c++){
+			samp->Amplitude[c] = pullFromBuffer(wFile->Samples, wFile->BitsPerSample/8, (n * wFile->Channels * wFile->BitsPerSample/8) + (c * wFile->BitsPerSample/8), LITTLE_ENDIAN_TAG);
+			// samp->Amplitude[c] = wFile->Samples[(n * wFile->Channels * wFile->BitsPerSample/8)+(wFile->BitsPerSample/8)-1];
+			// for (int o = (wFile->BitsPerSample/8)-2; o >= 0 ; o--){
+			// 	samp->Amplitude[c] = (samp->Amplitude[c] << 8) | (wFile->Samples[ (n * wFile->Channels * wFile->BitsPerSample/8)-o]); // little endian amplitude gotten from the audio buffer
+			// }
+		}
 	if(wFile->BitsPerSample <= 8){
 		for (int c = 0; c < wFile->Channels; c++){
-			samp->Amplitude[c] = wFile->Samples[(n * wFile->Channels * wFile->BitsPerSample/8)+(wFile->BitsPerSample/8)-1];
-			for (int o = (wFile->BitsPerSample/8)-2; o >= 0 ; o--){
-				samp->Amplitude[c] = (samp->Amplitude[c] << 8) | (wFile->Samples[ (n * wFile->Channels * wFile->BitsPerSample/8)-o]); // little endian amplitude gotten from the audio buffer
-			}
 			samp->Amplitude[c] -= 1<<(wFile->BitsPerSample-1); //2^bps-1 = (2^bps)/2
-		}
+		}	
 	}else{
-		/*  how to twos compliment lol
-			im not rusty pshhh
-			if the MSB is 1 then ya know this boy gon be negative
-			
-			conversion to signed:
-			invert with invert operator ~
-			then add 1
-			if MSB is 1 then u have a negative
-			else positive
-		*/
+		for (int c = 0; c < wFile->Channels; c++){
+			// long twosC = (~samp->Amplitude[c])+1;
+			// if((samp->Amplitude[c]>>wFile->BitsPerSample)==1){
+			// 	//twosC *= -1;
+			// }
+			// samp->Amplitude[c] = twosC;
+			samp->Amplitude[c] = pullLittleSigned(wFile->Samples, wFile->BitsPerSample/8, (n * wFile->Channels * wFile->BitsPerSample/8) + (c * wFile->BitsPerSample/8));
+		}
 	}
-		//samp->Amplitude[0] = -26214;
 	printf ("Amplitude: %ld\n", samp->Amplitude[0]);
-	std::cout << (signed)samp->Amplitude[0] << std::endl;
 	return samp;
 }
 
@@ -104,7 +130,8 @@ wavFile * loadWav(char * filePath){
 	printf ("Sample Rate: %d\n", wf->SampleRate);
 	printf ("Block Align: %d\n", wf->BlockAlign);
 	printf ("Bits Per Sample: %d\n", wf->BitsPerSample);
-	printf ("Audio Data Size: %lu\n\n", audioDataSize);
+	printf ("Audio Data Size: %lu\n", audioDataSize);
+	printf ("Track Length: %lu\n\n", (audioDataSize/wf->Channels/(wf->BitsPerSample/8)/wf->SampleRate));
 
 	printf ("Audio Data: %x %x %x %x\n", wf->Samples[0], wf->Samples[1], wf->Samples[2], wf->Samples[3]);
 
