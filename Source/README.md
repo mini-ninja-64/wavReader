@@ -6,6 +6,7 @@
 
 <h1>To Do</h1>
 
+* Create Branches for stuff
 * Calculate Track Length
 * Split up samples by channel instead of raw audio data
 * Come up with a solution for playback
