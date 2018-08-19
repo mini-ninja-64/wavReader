@@ -5,6 +5,7 @@
 * Copies audio to char array
 * Calculate the amplitudes of samples
 * Calculate Track Length (Basic)
+* Generate spectogram (basically a test for me)
 
 <h1>WIP</h1>
 
@@ -17,5 +18,4 @@
 * Stream from disk
 * Create Branches for stuff
 * Come up with a solution for playback
-* Generate spectogram
 * Lots more
