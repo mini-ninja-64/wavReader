@@ -22,6 +22,8 @@ every riff chunk has this layout:
 4 byte ChunkSize (this excludes the size of chunk id and chunk size)
 the rest of the chunks info
 
+RIFF files also support list chunks which contain the data of
+
 How are Wave files stored:
 Chunk 1 ("Riff Chunk Descriptor"):
  Endian	|Pos|  Size  |Data Stored		| Descriptions/Example
@@ -41,7 +43,10 @@ little	| 32 |2 bytes |Block Align		| NumChannels * BitsPerSample/8 (num of bytes
 little	| 34 |2 bytes |Bits Per Sample 	| number of bits per sample
 TODO: cbsize and shit might write into a seperate branch after finishing to have a light weight version for arduino platforms etc
 
-Chunk 2 ("Data Chunk"):
+Chunk 3 ("INFO Chunk"):
+
+
+Chunk 3/4 ("Data Chunk"):
 big	 	| 36 |4 bytes |Chunk ID			| data (0x64617461)
 little	| 40 |4 bytes |Chunk Size		| wav data size
 little	| 44 |X bytes |WAV Data 		| The actual sound data

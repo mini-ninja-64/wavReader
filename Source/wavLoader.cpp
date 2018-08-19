@@ -114,7 +114,16 @@ wavFile * loadWav(char * filePath){
 	wf.SampleRate = pullFromBuffer(buffer, 2, 24, LITTLE_ENDIAN_TAG);//4 bytes at 24
 	wf.BlockAlign = pullFromBuffer(buffer, 2, 32, LITTLE_ENDIAN_TAG);//2 bytes at 32
 	wf.BitsPerSample = pullFromBuffer(buffer, 2, 34, LITTLE_ENDIAN_TAG);//2 bytes at 34
-	unsigned long audioDataSize = pullFromBuffer(buffer, 4, 40, LITTLE_ENDIAN_TAG);
+
+	//check if info chunk
+	int nextChunkPos = 20+pullFromBuffer(buffer, 4, 16, LITTLE_ENDIAN_TAG);
+	if(pullFromBuffer(buffer, 4, nextChunkPos, LITTLE_ENDIAN_TAG) == 0x5453494C){
+		nextChunkPos+=pullFromBuffer(buffer, 4, nextChunkPos+4, LITTLE_ENDIAN_TAG)+8; //+8 for the start of info chunk
+		std::cout << "info found, data chunk starts at: " << nextChunkPos << std::endl;
+	}
+
+	//more file info and data size
+	unsigned long audioDataSize = pullFromBuffer(buffer, 4, nextChunkPos+4, LITTLE_ENDIAN_TAG);
 	wf.NumberOfSamples = (double)(audioDataSize/wf.Channels) * (double)(8.0/wf.BitsPerSample);//audio data size = channels * number of samples * bitsPerSample/8, number of samples = (audio data size * 8)/(channels*bitsper sample)
 
 	//create sample array
@@ -123,7 +132,7 @@ wavFile * loadWav(char * filePath){
 	//move the data array
 	//right so currently mem moving to Audio data
 	//so to get audio sample at specific point, we do (n*channel*bitspersample/8)
-	memmove(wf.Samples, buffer+44, audioDataSize);
+	memmove(wf.Samples, buffer+nextChunkPos+8, audioDataSize); // data offset will be 20(length until after size of fmt) + (size of format) + 8(length till wav size) 
 	free(buffer);
 
 	printf ("Channels: %d\n", wf.Channels);
