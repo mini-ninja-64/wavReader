@@ -9,10 +9,11 @@
 
 <h1>WIP</h1>
 
-* Split up samples by channel instead of raw audio data
+* Split up samples by channel instead of raw audio data (could use a better solution)
 
 <h1>To Do</h1>
 
+* add ncurses stuff
 * Update C version
 * Stop presuming data will be where its supposed to be and use the chunk sizes incase files have stuff in them 
 * Stream from disk
