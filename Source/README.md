@@ -6,17 +6,16 @@
 * Calculate the amplitudes of samples
 * Calculate Track Length (Basic)
 * Generate spectogram (basically a test for me)
-
-<h1>WIP</h1>
-
+* Accepts formats with an LIST(INFO) chunk (possibly reimplement whole reader to read file by chunk to gather info that way file could be in any order and skip unkown bytes)
 * Split up samples by channel instead of raw audio data (could use a better solution)
+
 
 <h1>To Do</h1>
 
 * add ncurses stuff
 * Update C version
-* Stop presuming data will be where its supposed to be and use the chunk sizes incase files have stuff in them 
 * Stream from disk
+* Support non pcm formats
 * Create Branches for stuff
 * Come up with a solution for playback
 * Lots more
