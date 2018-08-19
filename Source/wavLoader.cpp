@@ -46,12 +46,12 @@ long pullLittleSigned(unsigned char * buffer, int length, int startAddress){
 
 sample * createSample(wavFile * wFile, int n){
 	//TODO: optimise and neaten up this whole thing
-	sample *samp;
+	static sample samp;
 	//printf ("Channels: %d\n", wFile->Channels);
-	samp->Amplitude = (long*) malloc (sizeof(long)*wFile->Channels);//(long*) malloc (sizeof(long)*wFile->Channels);
+	samp.Amplitude = (long*) malloc (sizeof(long)*wFile->Channels);//(long*) malloc (sizeof(long)*wFile->Channels);
 
 	for (int c = 0; c < wFile->Channels; c++){
-			samp->Amplitude[c] = pullFromBuffer(wFile->Samples, wFile->BitsPerSample/8, (n * wFile->Channels * wFile->BitsPerSample/8) + (c * wFile->BitsPerSample/8), LITTLE_ENDIAN_TAG);
+			samp.Amplitude[c] = pullFromBuffer(wFile->Samples, wFile->BitsPerSample/8, (n * wFile->Channels * wFile->BitsPerSample/8) + (c * wFile->BitsPerSample/8), LITTLE_ENDIAN_TAG);
 			// samp->Amplitude[c] = wFile->Samples[(n * wFile->Channels * wFile->BitsPerSample/8)+(wFile->BitsPerSample/8)-1];
 			// for (int o = (wFile->BitsPerSample/8)-2; o >= 0 ; o--){
 			// 	samp->Amplitude[c] = (samp->Amplitude[c] << 8) | (wFile->Samples[ (n * wFile->Channels * wFile->BitsPerSample/8)-o]); // little endian amplitude gotten from the audio buffer
@@ -59,7 +59,7 @@ sample * createSample(wavFile * wFile, int n){
 		}
 	if(wFile->BitsPerSample <= 8){
 		for (int c = 0; c < wFile->Channels; c++){
-			samp->Amplitude[c] -= 1<<(wFile->BitsPerSample-1); //2^bps-1 = (2^bps)/2
+			samp.Amplitude[c] -= 1<<(wFile->BitsPerSample-1); //2^bps-1 = (2^bps)/2
 		}	
 	}else{
 		for (int c = 0; c < wFile->Channels; c++){
@@ -68,11 +68,11 @@ sample * createSample(wavFile * wFile, int n){
 			// 	//twosC *= -1;
 			// }
 			// samp->Amplitude[c] = twosC;
-			samp->Amplitude[c] = pullLittleSigned(wFile->Samples, wFile->BitsPerSample/8, (n * wFile->Channels * wFile->BitsPerSample/8) + (c * wFile->BitsPerSample/8));
+			samp.Amplitude[c] = pullLittleSigned(wFile->Samples, wFile->BitsPerSample/8, (n * wFile->Channels * wFile->BitsPerSample/8) + (c * wFile->BitsPerSample/8));
 		}
 	}
-	printf ("Amplitude: %ld\n", samp->Amplitude[0]);
-	return samp;
+	//printf ("Amplitude: %ld\n", samp.Amplitude[0]);
+	return &samp;
 }
 
 wavFile * loadWav(char * filePath){
@@ -108,33 +108,33 @@ wavFile * loadWav(char * filePath){
 		return NULL;
 	}
 
-	wavFile *wf;
+	static wavFile wf;
 	//file info
-	wf->Channels = pullFromBuffer(buffer, 2, 22, LITTLE_ENDIAN_TAG);//2 bytes at 20
-	wf->SampleRate = pullFromBuffer(buffer, 2, 24, LITTLE_ENDIAN_TAG);//4 bytes at 24
-	wf->BlockAlign = pullFromBuffer(buffer, 2, 32, LITTLE_ENDIAN_TAG);//2 bytes at 32
-	wf->BitsPerSample = pullFromBuffer(buffer, 2, 34, LITTLE_ENDIAN_TAG);//2 bytes at 34
+	wf.Channels = pullFromBuffer(buffer, 2, 22, LITTLE_ENDIAN_TAG);//2 bytes at 22
+	wf.SampleRate = pullFromBuffer(buffer, 2, 24, LITTLE_ENDIAN_TAG);//4 bytes at 24
+	wf.BlockAlign = pullFromBuffer(buffer, 2, 32, LITTLE_ENDIAN_TAG);//2 bytes at 32
+	wf.BitsPerSample = pullFromBuffer(buffer, 2, 34, LITTLE_ENDIAN_TAG);//2 bytes at 34
 	unsigned long audioDataSize = pullFromBuffer(buffer, 4, 40, LITTLE_ENDIAN_TAG);
-	wf->NumberOfSamples = (audioDataSize/wf->Channels) * (8/wf->BitsPerSample);//audio data size = channels * number of samples * bitsPerSample/8, number of samples = (audio data size * 8)/(channels*bitsper sample)
+	wf.NumberOfSamples = (double)(audioDataSize/wf.Channels) * (double)(8.0/wf.BitsPerSample);//audio data size = channels * number of samples * bitsPerSample/8, number of samples = (audio data size * 8)/(channels*bitsper sample)
 
 	//create sample array
-	wf->Samples = (unsigned char*) malloc (sizeof(char)*audioDataSize); //4 bytes at 40
+	wf.Samples = (unsigned char*) malloc (sizeof(char)*audioDataSize); //4 bytes at 40
 
 	//move the data array
 	//right so currently mem moving to Audio data
 	//so to get audio sample at specific point, we do (n*channel*bitspersample/8)
-	memmove(wf->Samples, buffer+44, audioDataSize);
+	memmove(wf.Samples, buffer+44, audioDataSize);
 	free(buffer);
-	
-	printf ("Channels: %d\n", wf->Channels);
-	printf ("Sample Rate: %d\n", wf->SampleRate);
-	printf ("Block Align: %d\n", wf->BlockAlign);
-	printf ("Bits Per Sample: %d\n", wf->BitsPerSample);
+
+	printf ("Channels: %d\n", wf.Channels);
+	printf ("Sample Rate: %d\n", wf.SampleRate);
+	printf ("Block Align: %d\n", wf.BlockAlign);
+	printf ("Bits Per Sample: %d\n", wf.BitsPerSample);
 	printf ("Audio Data Size: %lu\n", audioDataSize);
-	printf ("Track Length: %lu\n\n", (audioDataSize/wf->Channels/(wf->BitsPerSample/8)/wf->SampleRate));
+	printf ("Track Length: %lu\n\n", (audioDataSize/wf.Channels/(wf.BitsPerSample/8)/wf.SampleRate));
 
-	printf ("Audio Data: %x %x %x %x\n", wf->Samples[0], wf->Samples[1], wf->Samples[2], wf->Samples[3]);
+	printf ("Audio Data: %x %x %x %x\n", wf.Samples[0], wf.Samples[1], wf.Samples[2], wf.Samples[3]);
 
 
-	return wf;
+	return &wf;
 }
