@@ -8,11 +8,10 @@
 * Generate spectogram (basically a test for me)
 * Accepts formats with an LIST(INFO) chunk (possibly reimplement whole reader to read file by chunk to gather info that way file could be in any order and skip unkown bytes)
 * Split up samples by channel instead of raw audio data (could use a better solution)
-
+* add ncurses stuff (very basic)
 
 <h1>To Do</h1>
 
-* add ncurses stuff
 * Update C version
 * Stream from disk
 * Support non pcm formats
